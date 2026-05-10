@@ -1016,18 +1016,24 @@
     return { ok: remain.length === 0, count: success, remain: remain.length };
   }
 
-  function renderSend(message = '結果を送信しています...', error = '') {
+  function renderSend(message = '結果を送信しています...', error = '', canReturnHome = false) {
     state.screen = 'send';
+    const messageColor = message.includes('送信しています')
+      ? '#8b0000'
+      : message.includes('完了しました')
+        ? '#005bbb'
+        : '';
+
     app.innerHTML = `
       <section class="screen send-screen">
         <div class="hero">
           <div class="hero-card">
             <h1 class="message-title">UIタイムアタック終了</h1>
-            <p class="message-body">${escapeHtml(message)}<br>タイムと結果は大型モニターで確認してください．</p>
+            <p class="message-body"><span style="color:${messageColor};font-weight:700;">${escapeHtml(message)}</span><br>タイムと結果は大型モニターで確認してください．</p>
             ${error ? `<div class="error-banner">${escapeHtml(error)}</div>` : ''}
             <div class="footer-actions" style="justify-content:center;margin-top:24px;">
               ${error ? `<button class="secondary-button" data-action="retry-send">再送信</button>` : ''}
-              <button class="brown-button" data-action="finish-home">最初の画面に戻る</button>
+              <button class="brown-button" data-action="finish-home" ${canReturnHome ? '' : 'disabled'}>最初の画面に戻る</button>
             </div>
           </div>
         </div>
@@ -1036,12 +1042,13 @@
 
   async function sendCurrentPayload() {
     const payload = makePayload();
+    renderSend('結果を送信しています...', '', false);
     try {
       await sendPayload(payload);
-      renderSend('送信が完了しました．');
+      renderSend('送信が完了しました．', '', true);
     } catch (err) {
       saveUnsent(payload);
-      renderSend('送信できませんでした．スタッフに知らせてください．', `${err.message || err}．未送信データとして端末に保存しました．`);
+      renderSend('送信できませんでした．スタッフに知らせてください．', `${err.message || err}．未送信データとして端末に保存しました．`, true);
     }
   }
 
